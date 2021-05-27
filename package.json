@@ -1,0 +1,23 @@
+{
+  "name": "employee-tracker",
+  "version": "1.0.0",
+  "description": "- [_Project Link_](#project-link)\r - [_About my Project_](#about-my-project)\r - [_Screenshots_](#screenshots)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/misha244/employee-tracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/misha244/employee-tracker/issues"
+  },
+  "homepage": "https://github.com/misha244/employee-tracker#readme",
+  "dependencies": {
+    "inquirer": "^8.1.0"
+  }
+}
