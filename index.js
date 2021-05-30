@@ -7,11 +7,11 @@ const Employee = require("./src/db/Employee");
 const DB = require("./src/db/DB");
 
 const init = async () => {
-  const db = new DB();
+  const db = new DB("company_db");
 
   await db.start();
 
-  const initialQ = await db.parameterisedQuery({
+  const initialQ = {
     name: "firstQ",
     type: "list",
     message: "What would you like to do?",
@@ -25,12 +25,12 @@ const init = async () => {
       "Add a Department",
       "Exit",
     ],
-  });
+  };
 
   const { firstQ } = await inquirer.prompt(initialQ);
 
   if (firstQ === "View All Employees") {
-    await viewAllEmployes();
+    await viewAllEmployees();
   } else if (firstQ === "View All Roles") {
     await viewAllRoles();
   } else if (firstQ === "View All Departments") {
@@ -48,6 +48,49 @@ const init = async () => {
       await db.end();
     }
   }
+};
+
+// initial functions
+const viewAllEmployees = async () => {
+  let query = `SELECT * FROM employees`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const viewAllRoles = async () => {
+  let query = `SELECT * FROM roles`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const viewAllDepartments = async () => {
+  let query = `SELECT * FROM departments`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const addEmployee = async () => {
+  let query = `SELECT * FROM employees`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const updateEmployee = async () => {
+  let query = `SELECT * FROM employees`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const addRole = async () => {
+  let query = `SELECT * FROM employees`;
+  let data = await db.query(query);
+  console.table(data);
+};
+
+const addDepartment = async () => {
+  let query = `SELECT * FROM employees`;
+  let data = await db.query(query);
+  console.table(data);
 };
 
 init();
