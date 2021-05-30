@@ -1,9 +1,5 @@
 const inquirer = require("inquirer");
 const mysql = require("mysql");
-const cTable = require("console.table");
-const Department = require("./src/db/Department");
-const Role = require("./src/db/Role");
-const Employee = require("./src/db/Employee");
 const DB = require("./src/db/DB");
 const db = new DB("company_db");
 
@@ -37,7 +33,7 @@ const init = async () => {
   } else if (firstQ === "Add an Employee") {
     await addEmployee();
   } else if (firstQ === "Update Employee Role") {
-    await updateEmployee();
+    await updateEmployeeRole();
   } else if (firstQ === "Add a Role") {
     await addRole();
   } else if (firstQ === "Add a Department") {
@@ -69,12 +65,35 @@ const viewAllDepartments = async () => {
 };
 
 const addEmployee = async () => {
-  let query = `SELECT * FROM employees`;
-  let data = await db.query(query);
-  console.table(data);
+  const newEmployee = await inquirer.prompt([
+    {
+      type: "input",
+      name: "fName",
+      message: "Please enter the new employee's first name: ",
+    },
+    {
+      type: "input",
+      name: "lName",
+      message: "Please enter the new employee's last name: ",
+    },
+    {
+      type: "input",
+      name: "id",
+      message: "Please enter the new employee's Id number: ",
+    },
+  ]);
+
+  const result = await db.parameterisedQuery(`INSERT INTO employees SET ?`, {
+    first_name: newEmployee.fName,
+    last_name: newEmployee.lName,
+    role_id: newEmployee.id,
+  });
+  console.log(
+    `${newEmployee.fName} ${newEmployee.lName} has successfully been added as an employee!`
+  );
 };
 
-const updateEmployee = async () => {
+const updateEmployeeRole = async () => {
   let query = `SELECT * FROM employees`;
   let data = await db.query(query);
   console.table(data);
