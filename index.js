@@ -5,10 +5,9 @@ const Department = require("./src/db/Department");
 const Role = require("./src/db/Role");
 const Employee = require("./src/db/Employee");
 const DB = require("./src/db/DB");
+const db = new DB("company_db");
 
 const init = async () => {
-  const db = new DB("company_db");
-
   await db.start();
 
   const initialQ = {
