@@ -155,7 +155,7 @@ const addEmployee = async () => {
             value: role.id,
           };
         }),
-        message: "Please enter the new employee's role Id number:",
+        message: "Please enter the new employee's role:",
       },
       {
         name: "employeeManagerId",
