@@ -4,46 +4,49 @@ const db = new DB("company_db");
 
 const init = async () => {
   await db.start();
+  await initialQ();
+  await db.end();
+  console.log("Bye!");
+};
+const initialQ = async () => {
+  const firstQuestion = [
+    {
+      type: "list",
+      name: "firstQ",
+      choices: [
+        "View All Employees",
+        "View All Roles",
+        "View All Departments",
+        "Add an Employee",
+        "Update Employee Role",
+        "Add a Role",
+        "Add a Department",
+        "Exit",
+      ],
+      message: "Please, select what would you like to do:",
+    },
+  ];
 
-  const initialQ = {
-    name: "firstQ",
-    type: "list",
-    message: "What would you like to do?",
-    choices: [
-      "View All Employees",
-      "View All Roles",
-      "View All Departments",
-      "Add an Employee",
-      "Update Employee Role",
-      "Add a Role",
-      "Add a Department",
-      "Exit",
-    ],
-  };
+  const { firstQ } = await inquirer.prompt(firstQuestion);
 
-  const { firstQ } = await inquirer.prompt(initialQ);
-
-  if (firstQ === "View All Employees") {
-    await viewAllEmployees();
-  } else if (firstQ === "View All Roles") {
-    await viewAllRoles();
-  } else if (firstQ === "View All Departments") {
-    await viewAllDepartments();
-  } else if (firstQ === "Add an Employee") {
-    await addEmployee();
+  if (firstQ === "Exit") {
+    await db.end();
+  } else if (firstQ === "View all departments") {
+    viewAllDepartments();
+  } else if (firstQ === "View all roles") {
+    viewAllRoles();
+  } else if (firstQ === "View all employees") {
+    viewAllEmployees();
+  } else if (firstQ === "Add new department") {
+    await addDepartment();
   } else if (firstQ === "Update Employee Role") {
     await updateEmployeeRole();
-  } else if (firstQ === "Add a Role") {
+  } else if (firstQ === "Add new role") {
     await addRole();
-  } else if (firstQ === "Add a Department") {
-    await addDepartment();
-  } else {
-    if (firstQ === "Exit") {
-      await db.end();
-    }
+  } else if (firstQ === "Add new employee") {
+    await addEmployee();
   }
 };
-
 // initial functions
 const viewAllEmployees = async () => {
   const query = `SELECT * FROM employees`;
@@ -100,30 +103,40 @@ const updateEmployeeRole = async () => {
   const employeeName = chooseEmployees.map((employees) => {
     return `${employees.first_name} ${employees.last_name}`;
   });
-  const role = await db.query(`SELECT id, title FROM roles;`);
-  const updateEmployee = [
+  const chooseRoles = await db.query(`SELECT id, title FROM roles;`);
+  const roleName = chooseRoles.map((roles) => {
+    return roles.title;
+  });
+  const updateEmployeeQ = [
     {
-      type: "input",
-      name: "fName",
-      message: "Enter the employee's first name",
-    },
-    {
-      type: "input",
-      name: "lName",
-      message: "Enter the employee's last name",
+      type: "list",
+      name: "name",
+      message: "Select the name of the employee whose role you want to change:",
+      choices: employeeName,
     },
     {
       type: "list",
       name: "newRole",
       message: "Select the new title you want to assign to the employee:",
-      choices: role,
+      choices: roleName,
     },
   ];
 
-  await inquirer.prompt(updateEmployee);
+  const updateEmployeeA = await inquirer.prompt(updateEmployeeQ);
+  const selectedEmployee = chooseEmployees.filter((employees) => {
+    return (
+      `${employees.first_name} ${employees.last_name}` ===
+      updateEmployeeA.employeeName
+    );
+  });
+
+  const selectedRole = chooseRoles.filter((roles) => {
+    return roles.title === updateEmployeeA.roleName;
+  });
 
   await db.parameterisedQuery(
-    "UPDATE employees SET `role_id` = ? WHERE (id = ?);"
+    "UPDATE employees SET role_id = ? WHERE id = ?;",
+    [selectedEmployee.id, selectedRole.id]
   );
 };
 const addRole = async () => {
