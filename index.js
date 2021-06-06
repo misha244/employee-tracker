@@ -62,41 +62,64 @@ const init = async () => {
 
 // initial functions
 const viewAllEmployees = async () => {
-  let query = `SELECT first_name, last_name, title, salary, name FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id=department.id;`;
-  let data = await db.query(query);
-  console.table(data);
+  try {
+    let query = `SELECT first_name, last_name, title, salary, name FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id=department.id;`;
+    let data = await db.query(query);
+    console.table(data);
+    init();
+  } catch (error) {
+    console.log(error);
+    init();
+  }
 };
 
 const viewAllRoles = async () => {
-  let query = `SELECT * FROM role`;
-  let data = await db.query(query);
-  console.table(data);
+  try {
+    let query = `SELECT * FROM role`;
+    let data = await db.query(query);
+    console.table(data);
+    init();
+  } catch (error) {
+    console.log(error);
+    init();
+  }
 };
 
 const viewAllDepartments = async () => {
-  let query = `SELECT * FROM department`;
-  let data = await db.query(query);
-  console.table(data);
+  try {
+    let query = `SELECT * FROM department`;
+    let data = await db.query(query);
+    console.table(data);
+    init();
+  } catch (error) {
+    console.log(error);
+    init();
+  }
 };
 
 const addEmployee = async () => {
-  const newEmployee = await inquirer.prompt([
-    {
-      type: "input",
-      name: "fName",
-      message: "Please enter the new employee's first name: ",
-    },
-    {
-      type: "input",
-      name: "lName",
-      message: "Please enter the new employee's last name: ",
-    },
-    {
-      type: "input",
-      name: "id",
-      message: "Please enter the new employee's Id number: ",
-    },
-  ]);
+  try {
+    const newEmployee = await inquirer.prompt([
+      {
+        type: "input",
+        name: "fName",
+        message: "Please enter the new employee's first name: ",
+      },
+      {
+        type: "input",
+        name: "lName",
+        message: "Please enter the new employee's last name: ",
+      },
+      {
+        type: "input",
+        name: "id",
+        message: "Please enter the new employee's Id number: ",
+      },
+    ]);
+  } catch (error) {
+    console.log(error);
+    init();
+  }
 
   const result = await db.parameterisedQuery(`INSERT INTO employees SET ?`, {
     first_name: newEmployee.fName,
@@ -109,45 +132,51 @@ const addEmployee = async () => {
 };
 
 const updateEmployeeRole = async () => {
-  const updateNameSelect = await db.query(
-    `SELECT first_name, last_name FROM employee;`
-  );
-  const updateRoleSelect = await db.query(`SELECT title FROM role;`);
-  const employeeName = updateNameSelect.map((employee) => {
-    return `${employee.first_name} ${employee.last_name}`;
-  });
-  const roleName = updateRoleSelect.map((role) => {
-    return role.title;
-  });
-  const updateRoleQ = [
-    {
-      type: "list",
-      name: "name",
-      message: "Select the name of the employee whose role you want to change:",
-      choices: employeeName,
-    },
-    {
-      type: "list",
-      name: "newRole",
-      message: "Select the new title you want to assign to the employee:",
-      choices: roleName,
-    },
-  ];
+  try {
+    let employees = await db.query("SELECT * FROM employee");
 
-  const updateRole = await inquirer.prompt(updateRoleQ);
-  const chosenName = updateNameSelect.filter((employee) => {
-    return (
-      `${employee.first_name} ${employee.last_name}` === updateRole.employeeName
-    );
-  });
-  const chosenRole = updateRoleSelect.filter((role) => {
-    return role.title === updateRole.roleName;
-  });
+    let employeeSelection = await inquirer.prompt([
+      {
+        name: "name",
+        type: "list",
+        choices: employees.map((employeeName) => {
+          return {
+            name: employeeName.first_name + " " + employeeName.last_name,
+            value: employeeName.id,
+          };
+        }),
+        message:
+          "Select the name of the employee whose role you want to change:",
+      },
+    ]);
 
-  await db.parameterisedQuery(`UPDATE role SET title = ? WHERE id = ?;`, [
-    chosenName,
-    chosenRole,
-  ]);
+    let roles = await db.query("SELECT * FROM role");
+
+    let roleSelection = await inquirer.prompt([
+      {
+        type: "list",
+        name: "role",
+        choices: roles.map((roleName) => {
+          return {
+            name: roleName.title,
+            value: roleName.id,
+          };
+        }),
+        message: "Select the new title you want to assign to the employee:",
+      },
+    ]);
+
+    let result = await db.query("UPDATE employee SET ? WHERE ?", [
+      { role_id: roleSelection.role },
+      { id: employeeSelection.name },
+    ]);
+
+    console.log(`The role was successfully updated.\n`);
+    init();
+  } catch (error) {
+    console.log(error);
+    init();
+  }
 };
 
 const addRole = async () => {
