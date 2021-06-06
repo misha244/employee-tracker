@@ -2,12 +2,6 @@ const inquirer = require("inquirer");
 const DB = require("./src/db/DB");
 const db = new DB("company_db");
 
-const init = async () => {
-  await db.start();
-  await initialQ();
-  await db.end();
-  console.log("Bye!");
-};
 const initialQ = async () => {
   const firstQuestion = [
     {
@@ -29,9 +23,7 @@ const initialQ = async () => {
 
   const { firstQ } = await inquirer.prompt(firstQuestion);
 
-  if (firstQ === "Exit") {
-    await db.end();
-  } else if (firstQ === "View all departments") {
+  if (firstQ === "View all departments") {
     viewAllDepartments();
   } else if (firstQ === "View all roles") {
     viewAllRoles();
@@ -45,23 +37,24 @@ const initialQ = async () => {
     await addRole();
   } else if (firstQ === "Add new employee") {
     await addEmployee();
+  } else if (firstQ === "Exit") {
+    await db.end();
   }
 };
 // initial functions
 const viewAllEmployees = async () => {
-  const query = `SELECT * FROM employees`;
-  const data = await db.query(query);
-  console.table(data);
+  const employeesQuery = await db.query("SELECT * FROM employees");
+  console.table(employeesQuery);
 };
 
 const viewAllRoles = async () => {
-  const query = `SELECT * FROM roles`;
+  const query = "SELECT * FROM roles";
   const data = await db.query(query);
   console.table(data);
 };
 
 const viewAllDepartments = async () => {
-  const query = `SELECT * FROM departments`;
+  const query = "SELECT * FROM departments";
   const data = await db.query(query);
   console.table(data);
 };
@@ -150,5 +143,8 @@ const addDepartment = async () => {
   const data = await db.query(query);
   console.table(data);
 };
-
+const init = async () => {
+  await db.start();
+  await initialQ();
+};
 init();
