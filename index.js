@@ -1,8 +1,24 @@
-const consoleTable = require("console.table");
-const inquirer = require("inquirer");
 const mysql = require("mysql");
-const DB = require("./src/db/DB");
-const db = new DB("company_db");
+const inquirer = require("inquirer");
+const consoleTable = require("console.table");
+const util = require("util");
+
+let db = mysql.createConnection({
+  host: "localhost",
+  port: 3306,
+  user: "root",
+  password: "password",
+  database: "company_db",
+});
+
+db.query = util.promisify(db.query);
+
+db.connect(function (err) {
+  if (err) throw err;
+  init();
+});
+
+console.table("\n------------ EMPLOYEE TRACKER ------------\n");
 
 const init = async () => {
   try {
@@ -60,75 +76,190 @@ const init = async () => {
   }
 };
 
-// initial functions
 const viewAllEmployees = async () => {
+  console.log("Employee View");
   try {
-    let query = `SELECT first_name, last_name, title, salary, name FROM employee LEFT JOIN role ON employee.role_id=role.id LEFT JOIN department ON role.department_id=department.id;`;
-    let data = await db.query(query);
-    console.table(data);
-    init();
-  } catch (error) {
-    console.log(error);
-    init();
-  }
-};
-
-const viewAllRoles = async () => {
-  try {
-    let query = `SELECT * FROM role`;
-    let data = await db.query(query);
-    console.table(data);
-    init();
-  } catch (error) {
-    console.log(error);
+    let query = "SELECT * FROM employee";
+    db.query(query, function (err, res) {
+      if (err) throw err;
+      let employeeArray = [];
+      res.forEach((employee) => employeeArray.push(employee));
+      console.table(employeeArray);
+      init();
+    });
+  } catch (err) {
+    console.log(err);
     init();
   }
 };
 
 const viewAllDepartments = async () => {
+  console.log("Department View");
   try {
-    let query = `SELECT * FROM department`;
-    let data = await db.query(query);
-    console.table(data);
+    let query = "SELECT * FROM department";
+    db.query(query, function (err, res) {
+      if (err) throw err;
+      let departmentArray = [];
+      res.forEach((department) => departmentArray.push(department));
+      console.table(departmentArray);
+      init();
+    });
+  } catch (err) {
+    console.log(err);
     init();
-  } catch (error) {
-    console.log(error);
+  }
+};
+
+const viewAllRoles = async () => {
+  console.log("Role View");
+  try {
+    let query = "SELECT * FROM role";
+    db.query(query, function (err, res) {
+      if (err) throw err;
+      let roleArray = [];
+      res.forEach((role) => roleArray.push(role));
+      console.table(roleArray);
+      init();
+    });
+  } catch (err) {
+    console.log(err);
     init();
   }
 };
 
 const addEmployee = async () => {
   try {
-    const newEmployee = await inquirer.prompt([
+    console.log("Employee Add");
+
+    let roles = await db.query("SELECT * FROM role");
+
+    let managers = await db.query("SELECT * FROM employee");
+
+    let answers = await inquirer.prompt([
       {
-        type: "input",
         name: "fName",
-        message: "Please enter the new employee's first name: ",
+        type: "input",
+        message: "Please enter the new employee's first name:",
       },
       {
-        type: "input",
         name: "lName",
-        message: "Please enter the new employee's last name: ",
+        type: "input",
+        message: "Please enter the new employee's last name:",
       },
       {
-        type: "input",
-        name: "id",
-        message: "Please enter the new employee's Id number: ",
+        name: "employeeRoleId",
+        type: "list",
+        choices: roles.map((role) => {
+          return {
+            name: role.title,
+            value: role.id,
+          };
+        }),
+        message: "Please enter the new employee's role Id number:",
+      },
+      {
+        name: "employeeManagerId",
+        type: "list",
+        choices: managers.map((manager) => {
+          return {
+            name: manager.first_name + " " + manager.last_name,
+            value: manager.id,
+          };
+        }),
+        message: "Please select the new employee's manager",
       },
     ]);
-  } catch (error) {
-    console.log(error);
+
+    let result = await db.query("INSERT INTO employee SET ?", {
+      first_name: answers.fName,
+      last_name: answers.lName,
+      role_id: answers.employeeRoleId,
+      manager_id: answers.employeeManagerId,
+    });
+
+    console.log(
+      `${answers.fName} ${answers.lName} has successfully been added as an employee!\n`
+    );
+    init();
+  } catch (err) {
+    console.log(err);
     init();
   }
+};
 
-  const result = await db.parameterisedQuery(`INSERT INTO employees SET ?`, {
-    first_name: newEmployee.fName,
-    last_name: newEmployee.lName,
-    role_id: newEmployee.id,
-  });
-  console.log(
-    `${newEmployee.fName} ${newEmployee.lName} has successfully been added as an employee!`
-  );
+const addDepartment = async () => {
+  try {
+    console.log("Department Add");
+
+    let answers = await inquirer.prompt([
+      {
+        name: "deptName",
+        type: "input",
+        message: "What is the name of your new department?",
+      },
+    ]);
+
+    let result = await db.query("INSERT INTO department SET ?", {
+      name: answers.deptName,
+    });
+
+    console.log(`${answers.deptName} added successfully to departments.\n`);
+    init();
+  } catch (err) {
+    console.log(err);
+    init();
+  }
+};
+
+const addRole = async () => {
+  try {
+    console.log("Role Add");
+
+    let departments = await db.query("SELECT * FROM department");
+
+    let answers = await inquirer.prompt([
+      {
+        name: "title",
+        type: "input",
+        message: "Enter the title of the role you want to add:",
+      },
+      {
+        name: "salary",
+        type: "input",
+        message: "What is your new role's salary?",
+      },
+      {
+        name: "departmentId",
+        type: "list",
+        choices: departments.map((departmentId) => {
+          return {
+            name: departmentId.department_name,
+            value: departmentId.id,
+          };
+        }),
+        message: "What department ID is this role associated with?",
+      },
+    ]);
+
+    let chosenDepartment;
+    for (i = 0; i < departments.length; i++) {
+      if (departments[i].department_id === answers.choice) {
+        chosenDepartment = departments[i];
+      }
+    }
+
+    let result = await db.query("INSERT INTO role SET ?", {
+      title: answers.title,
+      salary: answers.salary,
+      department_id: answers.departmentId,
+    });
+
+    console.log(`${answers.title} role has been added successfully.\n`);
+    init();
+  } catch (err) {
+    console.log(err);
+    init();
+  }
 };
 
 const updateEmployeeRole = async () => {
@@ -178,42 +309,3 @@ const updateEmployeeRole = async () => {
     init();
   }
 };
-
-const addRole = async () => {
-  const departmentsOptions = await db.query("Select * FROM department");
-  const departmentId = departmentsOptions.map((department) => {
-    return department.id;
-  });
-  const addRoleQ = await inquirer.prompt([
-    {
-      type: "input",
-      name: "roleTitle",
-      message: "Enter the name of the title you want to add:",
-    },
-    {
-      type: "list",
-      name: "newRole",
-      message: "Enter the salary of the title you want to add:",
-    },
-    {
-      name: "department",
-      type: "list",
-      choices: departmentId,
-      message: "What department ID is this role associated with?",
-    },
-  ]);
-
-  let result = await connection.query("INSERT INTO role SET ?", {
-    title: addRoleQ.title,
-    salary: addRoleQ.salary,
-    department_id: addRoleQ.departmentId,
-  });
-};
-
-const addDepartment = async () => {
-  let query = `SELECT * FROM employee`;
-  let data = await db.query(query);
-  console.table(data);
-};
-
-init();
